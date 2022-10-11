@@ -1631,28 +1631,84 @@ vue 的高阶组件真的很复杂。以上代码还只是冰山一角，都不�
 
 # 10.9
 
-### unity 动画系统
+## Vue 组件通信
 
-#### 参考文档
+父子组件之间的通信，一般会通过 prop 从父组件向子组件传递数据，同时子组件可以通过$emit() 把数据传递到父组件。
+
+除此之外，父组件还可以通过 ref 引用访问子组件。
+
+同样的，还可以使用$parent，$children,$root 等 API 来分别获取父实例、子实例和根实例。（不过，并不推荐这样操作，因为一旦布局调整就会变得很被动）
+
+父子组件以外的其它组件通信方式：
+
+- 全局 EventBus： $emit、$on
+  eventbus 本质就是消息订阅/发布模式，好处是可以随意定义消息，任意地点使用触发。但是弊端也很明显，就是每一个事件的触发对应一个监听，关系是一一对应。在整个应用中看，则是散落在各处，随意乱窜的数据流动。需要定位的时候，只能通过全局搜索的方式来跟踪数据的去向。
+
+  eventbus 的“灾难”：
+  vue 是单页应用，如果你在某一个页面刷新之后，与之相关的 EventBus 会被移除，这样就导致业务走不下去。还有就是如果业务有反复操作的页面，EventBus 在监听的时候就会触发很多次，也是一个非常大的隐患。这时候我们就需要好好处理 EventBus 在项目中的关系。通常会用到，在 vue 页面销毁时，同时移除 EventBus 事件监听。
+
+- 共享对象
+  全局共享对象，常见的有 localstorage、sessionStorage（刷新会丢失）、cookie 等
+- 单方向流动
+  在全局数据的使用变频繁之后，我们在定位问题的时候还会遇到不知道这个数据为何改变的情况，因为所有引用到这个全局数据的地方都可能对它进行改变。
+  这种情况下，给数据的流动一个方向，则可以方便地跟踪数据的来源和去处。
+
+  通过流的方式来管理状态，常见的状态管理工具像 Vuex、Redux 等，都是这样管理的。
+
+#### Vuex
+
+通过**单向数据流**的方式来维护状态变更，所有的数据都会存到 Store 里，只能通过提交 Mutation 或者触发 Action 的方式来改变数据，在这个过程中就会形成一个单向流动：（Action）-> Mutation -> Store -> update view。
+
+![Vuex](./imgs/Vuex%E5%8D%95%E5%90%91%E6%95%B0%E6%8D%AE%E6%B5%81.png)
+
+- Store 仓库
+- state 状态
+- mutation
+  **数据流的单向流动可以让开发者掌握所有数据状态变更的来龙去脉，mutation 的作用类似于一个守卫，所有的状态变更都必须来自 Mutation。**
+
+- action
+  在 Vuex 中，**mutation 是同步函数**，如果是异步的话，我们的状态变更就会不及时，这会影响后续其它地方获取状态的实时性。
+  那如果我们需要异步操作，例如从后台接口获取数据更新，这种情况下就可以使用 Action。
+
+  Action 相比与 Mutation，Action 的不同之处在于：
+
+  - 1. Action 提交的是 mutation，而不是直接变更状态
+  - 2. **Action 可以包含任意异步操作**
+
+为了避免单一 Store 变得臃肿，Vuex 允许我们将 Store 分割成模块 Module，每个模块拥有自己的 State、Mutation、Action 等，其实相当于我们将一个 Store 单一对象分成多个对象来维护，但最终也会合并为一个来进行更新。
+
+如果我们在不同的页面中，有相同的一些状态命名发生了冲突，我们还可以通过添加 namespaced: true 的方式，来创建带命名空间的模块。同时 Module 还支持嵌套使用。
+
+### Vuex 的具体使用实例
+
+```js
+
+```
+
+## unity 动画系统
+
+### 参考文档
 
 1. https://mp.weixin.qq.com/s/17lrqJSlUb-MGxm-ef8qaQ
 2. https://www.zhihu.com/column/hongliu
 
 ### unity 特效
 
-### React 持续学习（后续日期记录 React 相关的记录在这）
+要素：元素、节奏、色彩
+
+## React 持续学习（后续日期记录 React 相关的记录在这）
 
 React18 和 React17 区别不大，主要就是 index.js 下的严格模式
 
-#### React 基础
+### React 基础
 
-##### JSX
+#### JSX
 
 JavaScript XML，充分利用 JS 自身的可编程能力创建 HTML 结构
 
 JSX 并不是标准的 JS 语法，浏览器是不识别的，需要通过 Babel 来转换，creat-react-app 脚手架中内置了 @babel/plugin-transform-react-jsx 包，用来解析 jsx 语法。
 
-{ js 表达式 }
+语法: { js 表达式 } , 和 Vue 不一样，React 是单括号
 
 可以使用的表达式：
 
@@ -1663,9 +1719,277 @@ JSX 并不是标准的 JS 语法，浏览器是不识别的，需要通过 Babel
 不可以用的表达式：
 if 语句、switch-case 语句、变量声明语句；这些叫语句，不是表达式，不能出现在 jsx {} 中！！
 
-#####
+- 动态样式
 
-### npx、npm、yarn
+```jsx
+<div className={showTitle ? "title" : ""}>this is a div</div>;
+
+const styleObj = {
+  color: red,
+};
+
+<div style={styleObj}>this is a div</div>;
+```
+
+- JSX 注意事项：
+
+1. JSX 必须有一个根节点，如果没有根节点，可以使用<></>(幽灵节点)替代
+2. 所有标签必须形成闭合，成对闭合或者自闭合都可以
+3. JSX 中的语法更贴近 JS 语法，属性名采用驼峰命名, 有一些特殊的特别记忆 class -> className for -> htmlFor
+4. JSX 支持多行（换行），如果需要换行，需使用（）包裹，防止 bug 出现
+
+#### React 组件
+
+##### 函数组件
+
+使用函数（或箭头函数）创建的组件，就叫做函数组件。
+
+```js
+const HelloComponent = () => {
+  return <div>组件页面内容</div>;
+};
+```
+
+约定说明：
+
+1. 组件的名称必须首字母大写，React 内部会根据这个判断是组件还是普通的 HTML 标签
+2. 函数组件必须有返回值，表示该组件的 UI 结构；如果不需要渲染任何内容，则返回 null
+3. 组件就像 HTML 标签一样可以被渲染到页面中。对于函数组件来说，渲染的内容是函数的返回值。
+4. 使用函数名称作为组件标签名称，可以成对出现也可以自闭合。
+
+##### 类组件
+
+```js
+class HellComponent extends React.Component {
+  render() {
+    return <div>组件页面内容...</div>;
+  }
+}
+```
+
+约定说明：
+
+1. 类名称也必须以大写字母开头
+2. 类组件应该继承 React.Component 父类，从而使用父类中提供的方法或属性
+3. 类组件必须提供 render 方法，render 方法必须有返回值，表示该组件的 UI 结构
+
+##### 函数组件的事件绑定
+
+1. 语法：on + 事件名称 = { 事件处理程序 }
+
+```js
+function HelloC() {
+  const handleClick = () => {
+    console.log("点击事件");
+  };
+  return <div onClick={handleClick}>Hello</div>;
+}
+```
+
+注意点：react 事件采用驼峰命名法: onMouseEnter
+
+2. 获取事件对象
+   获取事件对象 e 只需要在 事件的回调函数中补充一个形参 e 即可。
+
+```js
+function HelloC() {
+  const handleClick = (e) => {
+    console.log("获取点击事件对象e:", e);
+  };
+  return <div onClick={handleClick}>Click Me!</div>;
+}
+```
+
+3. 传递额外参数
+   改造事件绑定为箭头函数，在箭头函数中完成参数传递
+
+```js
+function HelloC() {
+  const handleClick = (e, data) => {
+    console.log("事件对象e", e);
+    console.log("额外参数data", data);
+  };
+  return <div onClick={(e) => handleClick(e, item)}>Click Me!</div>;
+}
+```
+
+##### 类组件的事件绑定
+
+类组件中的事件绑定，整体套路和函数组件一致，唯一需要注意的是事件处理函数定义的时候为了避免 this 指向丢失，事件定义要使用箭头函数的形式（Class Fields 类属性的方式），而在绑定的时候需要借助 this 关键字获取。
+
+```js
+class HelloComponent extends React.Component {
+  handleClick = (e, data) => {
+    console.log("事件对象e", e);
+    console.log("额外参数data", data);
+  };
+
+  render() {
+    return <div onClick={(e) => this.handleClick(e, item)}>Click Me!</div>;
+  }
+}
+```
+
+##### 组件状态
+
+提醒：在 React Hook 出来之前，函数式组件是没有自己的状态的，所以下面内容统一按类组件来讲解。
+
+1. 初始化状态
+
+- 通过 class 的实例属性 state 来初始化
+- state 的值是一个对象结构，表示一个组件可以有多个数据状态
+
+```js
+class Counter extends React.Component {
+  state = {
+    count: 0,
+  };
+
+  render() {
+    return <button>计数器</button>;
+  }
+}
+```
+
+2. 读取状态
+   通过 this.state 来读取状态
+
+```js
+class Counter extends React.Component {
+  state = {
+    count: 0,
+  };
+
+  render() {
+    return <button>计数器 {this.state.count}</button>;
+  }
+}
+```
+
+3. 修改状态
+
+- 通过 this.setState({ 要修改的数据 })
+- setState 方法作用
+  - 修改 state 中的数据状态
+  - 更新 UI
+- 思想
+  数据驱动视图，也就是只要修改数据状态，那么页面就会自动刷新，无需手动操作 DOM
+- 注意事项
+  不要直接修改 state 中的值，必须通过 setState 方法进行修改
+
+```js
+class Counter extends React.Component {
+  state = {
+    count: 0,
+  };
+
+  setCount = () => {
+    this.setState({
+      count: this.state.count + 1,
+    });
+  };
+
+  render() {
+    return <button onClick={this.setCount}>{this.state.count}</button>;
+  }
+}
+```
+
+#### React 的状态不可变
+
+不要直接修改状态的值，而是基于当前状态创建新的状态值
+
+```js
+class AComponent extends React.Component {
+  state = {
+    count: 0,
+    list: [1, 2, 3],
+    person: {
+      name: "jack",
+      age: 18,
+    },
+  };
+
+  setState = () => {
+    this.setState({
+      count: this.state.count + 1,
+      list: [...this.state.list, 4],
+      person: {
+        ...this.state.person,
+        name: "Rose",
+      },
+    });
+  };
+}
+```
+
+#### 表单处理
+
+##### 1. 受控表单组件
+
+什么是受控表单组件？ 就是表单元素自己的状态被 React 组件状态控制
+
+React 组件的状态的地方是在 state 中，表单元素如 input 元素也有自己的状态是在 value 中，React 将 state 与 input 的 value 绑定到一起，由 state 的值来控制表单元素的值，从而保证单一数据源特性。
+
+React 中没有类似于 Vue 里 v-model 的这种双向绑定功能，所以 React 就只能通过 state 属性和表单元素的值建立依赖关系，再通过 onChange 事件与 setState()结合更新 state 属性，以此来达到类似 v-model 的效果。（小程序就是抄的 react 这一套）
+
+```js
+class FormCompontnt extends React.Component {
+  state = {
+    msg: "this is a message",
+  };
+
+  handleChange = (e) => {
+    this.setState({
+      msg: e.target.value,
+    });
+  };
+
+  render() {
+    return <input value={this.state.msg} onChange={this.handleChange} />;
+  }
+}
+```
+
+##### 2. 非受控表单表单组件
+
+非受控就是表单元素不受 react 的 state 状态控制，就是原生 DOM 元素。
+实现过程：
+
+1. 通过调用 React.createRef 函数，创建一个 ref 对象 myRef
+2. 为元素添加 ref 属性，值为 myRef
+3. 在按钮的事件处理程序中，通过 myRef.current 拿到对应的 dom 元素，其中 myRef.current.value 拿到的就是 Dom 元素的值
+
+```js
+import { Component, createRef } from "react";
+
+class InputComponent extends Component {
+  myRef = createRef();
+
+  changHandler = () => {
+    console.log(this.myRef.current.value);
+  };
+
+  render() {
+    return (
+      <div>
+        <input ref={this.myRef} />
+        <button onClick={this.changeHandler}>submit</button>
+      </div>
+    );
+  }
+}
+```
+
+#### React 组件通信
+
+#### React 组件进阶
+
+#### React Hooks 基础
+
+#### React Hooks 进阶
+
+## npx、npm、yarn
 
 参考文章：https://blog.csdn.net/zheng18237111686/article/details/113933072
 
@@ -1696,3 +2020,71 @@ npm unpdate vue --save          ==     yarn upgrade vue
 1. 首先会检查本地项目路径中是否存在要执行的包 node_modules/
 2. 如果存在，执行；
 3. 如果不存在，意味着尚未安装该软件包，npx 将临时安装其最新版本，然后执行它；
+
+# 10.10
+
+## JSON.Parse(JSON.stringify()) 不能拷贝 fn
+
+## JS 判断类型
+
+### typeof
+
+语法： typeof xxx
+
+|          | 类型                               | typeof 结果 |
+| -------- | ---------------------------------- | ----------- |
+| 基础类型 | undefined                          | "undefined" |
+|          | null                               | 'object'    |
+|          | boolean                            | 'boolean'   |
+|          | number                             | 'number'    |
+|          | string                             | 'string'    |
+|          | BigInt                             | 'bigint'    |
+| 引用类型 | Object(Object、Array、Map、Set 等) | 'object'    |
+|          | Function                           | 'function'  |
+
+总结：
+
+1. 对于基础类型，除 null 外，均可以返回正确的结果
+2. 对于引用类型，除 function 外，一律返回 object
+3. 对于 null，返回 object
+4. 对于 function，返回 function
+
+### instanceof
+
+检测某个对象是不是另一个对象的实例，使用 instanceof
+
+语法： xxx instanceof Type
+
+[] instanceof Object => true
+[] instanceof Array => true
+判断是否是数组的正确做法：Array.isArray([]);
+
+### Objec.prototype.toString.call()
+
+#### toString
+
+- 每个对象都有一个 toString() 方法，当该对象被表示为一个文本值时，或者一个对象以预期的字符串方式引用时自动调用。
+- 默认情况下，toString()方法被每个 Object 对象继承。如果此方法在自定义对象中未被覆盖，toString()返回"[object type]"，其中 type 是对象的类型。
+
+## 表格组件的设计应该表头不动，表格内容随高度出现滚动
+
+# 10.11
+
+接下来一段时间会把重点关注在以下几个方面：
+
+- React
+- Vue
+- Webpack
+- Node
+
+把以上内容单独分块，每天提交一遍 GitHub
+
+再往后要总结面试常见的内容
+
+- JS 疑难点
+- 收集一些正则表达式
+-
+
+## 格式验证 fn(pattren, msg)
+
+这样校验数据是否合法，传入一个规则，和不合法时的提示消息。这样封装的好处是，后续如果规则变了，修改一下传参即可。
