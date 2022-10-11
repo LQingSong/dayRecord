@@ -2085,6 +2085,20 @@ npm unpdate vue --save          ==     yarn upgrade vue
 - 收集一些正则表达式
 -
 
-## 格式验证 fn(pattren, msg)
+## 封装问题
 
-这样校验数据是否合法，传入一个规则，和不合法时的提示消息。这样封装的好处是，后续如果规则变了，修改一下传参即可。
+1. 格式验证 fn(pattren, msg)
+   这样校验数据是否合法，传入一个规则，和不合法时的提示消息。这样封装的好处是，后续如果规则变了，修改一下传参即可。
+2. 单一职责原则真的太重要了，一个函数最好是只负责单个职能，颗粒度小灵活性就强，代码耦合小。
+
+## unity 设计模式仓库
+
+https://github.com/QianMo/Unity-Design-Pattern
+
+## 小程序页面跳转
+
+A -> B,在 B 页面处理完一些逻辑后 -> A,要调用 A 页面的方法(onShow)
+注意两点：
+
+- 使用页面跳转 wx.navigateBack
+- A 页面使用 onShow 生命周期，onLoad 不行
