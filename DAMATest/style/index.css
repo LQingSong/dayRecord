@@ -1,0 +1,59 @@
+:root {
+  --mt: 8px;
+}
+
+* {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  padding: 32px;
+}
+
+.qType-group {
+  display: flex;
+  justify-content: space-between;
+  width: 40%;
+  margin: var(--mt);
+}
+
+.q-radio label {
+  margin-left: 8px;
+}
+
+.question-title {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.options {
+  margin: var(--mt);
+}
+
+.options input {
+  width: 50%;
+  height: 36px;
+}
+
+.add-option {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  font-size: 24px;
+}
+
+.add-option:hover {
+  cursor: pointer;
+}
+
+.save {
+  width: 120px;
+  height: 60px;
+  line-height: 60px;
+  font-size: 22px;
+  border-radius: 8px;
+  margin: 16px;
+}

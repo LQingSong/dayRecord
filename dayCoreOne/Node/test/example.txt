@@ -1,1 +1,1 @@
-同步方法：你好啊，Node.js!
+{"type":"single","title":"1","options":["2"]}

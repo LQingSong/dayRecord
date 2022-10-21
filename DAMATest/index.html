@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./style/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.bootcss.com/qs/6.7.0/qs.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- 题型生成器 -->
+        <h4>类型：</h4>
+        <div class="qType-group" :value="qType">
+            <div class="q-radio">
+                <input name="qType" id="single" type="radio" value="single" @click="checkBindValue" />
+                <label for="single">单选题
+                </label>
+            </div>
+            <div class="q-radio">
+                <input name="qType" id="multi" type="radio" value="multi" @click="checkBindValue" />
+                <label for="multi">多选题</label>
+            </div>
+            <div class="q-radio">
+                <input name="qType" id="judge" type="radio" value="judge" @click="checkBindValue" />
+                <label for="judge">判断题</label>
+            </div>
+        </div>
+        <br>
+        <h4>题目：</h4>
+        <textarea name="qTitle" class="question-title" cols="30" rows="10" v-model.lazy="qTitle"></textarea>
+        <br>
+        <br>
+        <h4>选项：</h4>
+        <div class="options" v-for="(item,index) in qOptions" :key="item.id">
+            <input type="text" v-model="qOptions[index]">
+            <span class="add-option" @click="handleAddOption">+</span>
+        </div>
+
+        <button class="save" @click="handleSave">保存</button>
+        <button class="save" @click="handleSubmit">提交</button>
+    </div>
+    <script src="./index.js"></script>
+</body>
+
+</html>
