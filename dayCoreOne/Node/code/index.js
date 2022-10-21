@@ -346,7 +346,6 @@ const testKOA = () => {
 
   app.listen(3001);
   console.log("Server setup at port 3001.");
-};
 // testKOA();
 
 /**
