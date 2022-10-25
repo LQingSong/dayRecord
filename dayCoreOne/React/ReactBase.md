@@ -281,8 +281,238 @@ class InputComponent extends Component {
 
 #### React 组件通信
 
+- 父传子 props
+
+```js
+parent: return <children msg={state.message} />;
+
+const children = (props) => {
+  return <div></div>;
+};
+```
+
+- 子传父 回调函数
+
+```js
+function Son(props) {
+  const handleClick = () {
+    props.changeMsg('this is newMessage');
+  }
+  return (
+    <div>
+      {props.msg}
+      <button onClick={handleClick}>Change</button>
+    </div>
+  )
+}
+
+class App extends Component {
+  state = {
+    message: 'this is message'
+  }
+  const changeMessage = (newMsg) => {
+    console.log('子组件传过来的数据：', newMsg);
+    this.setState({
+      message: newMsg
+    })
+  }
+  render() {
+    return (
+      <div>父组件</div>
+      <Son msg = {this.state.message}
+      // 回调函数
+      changeMsg={this.changeMessage}
+      />
+    )
+  }
+}
+```
+
+- 兄弟(同级)组件消息传递，将共享状态提升到最近的父组件中，由父组件去管理这个状态
+
+- 跨组件通信，从 App(上层) 组件向任意一个下层组件传递数据，使用 Context
+
+1. 创建 提供者 和 消费者
+
+   > const { Provider, Consumer } = createContext();
+
+2. 用 Provider 包裹 App 组件
+
+```js
+class App extends Component {
+  render() {
+    <Provider value={this.state.msg}>...</Provider>;
+  }
+}
+```
+
+3. 用 Consumer 包裹要消费状态的下层组件
+
+```js
+<Consumer>{(value) => <span>{value}</span>}</Consumer>
+```
+
 #### React 组件进阶
+
+只有类组件（实例化）有生命周期，函数组件（不需要实例化）没有生命周期。
+
+生命周期：挂载时、更新时、卸载时
+生命周期钩子函数：constructor、render、componentDidMount、componentDidUpdate、componentWillUnmount
+
+不要在 render 和 componentDidUpdate 做任何更新操作
+
+componentDidMount 组件挂载完后执行，初始化的时候执行一次，可用来发送网络请求、DOM 操作
 
 #### React Hooks 基础
 
-#### React Hooks 进阶
+##### useState
+
+函数式组件更改数据状态，不能使用 setState，只能使用 useState,
+而且绑定事件时，OnClick={handleClick()}这样带()的方式，会一开始就触发并且无效绑定事件，正确写法是：
+
+- 如果不带参数，OnClick = {handleClick}
+- 如果有参数，OnClick = {() => handleClick(params)}
+
+useState()的默认值如果无法直接得到需要通过计算才能等到，可以使用
+
+```js
+useState(() => {
+  return initValue;
+});
+```
+
+##### useEffect 副作用
+
+副作用是相对于主作用来说的，一个函数除了主作用，其它作用就是副作用。
+对于 React 组件来说，主作用就是根据数据（state/props）渲染 UI，除此之外都是副作用（比如手动操作 DOM、ajax 请求）
+
+- **依赖项控制副作用的执行时机：**
+
+1. 不添加依赖项：
+
+```js
+useEffect(() => {
+  console.log("xxx副作用执行");
+});
+```
+
+该副作用函数会在首次渲染执行一次，以及不管是哪个状态更改引起更新时再重新执行
+
+2. 添加空数组
+
+```js
+useEffect(() => {
+  console.log("副作用只执行一次");
+}, []);
+```
+
+3. 添加特定依赖项
+
+```js
+const [count, setCount] = useState(0);
+useEffect(() => {
+  console.log("在特定依赖项变化时再执行");
+}, [count]);
+```
+
+该副作用函数会在首次渲染执行一次，往后只在状态 count 发生变化时执行
+
+注意：在 useEffect()回调函数中用到的数据，就是该副作用的依赖项，应该添加到依赖项数组中去。
+
+- **清楚副作用**
+  在组件被消耗时，如果有些副作用操作需要被清理，就可以使用此语法，比如常见的定时器
+
+```js
+useEffect(() => {
+  console.log('副作用函数执行了')
+
+  // 清理副作用
+  return () => {
+    console.log('在组件被消耗时，清理副作用的函数执行了')
+    ...
+  }
+})
+```
+
+- 在 useEffect 中发送网络请求，并正确使用 async await
+
+```js
+useEffect(() => {
+  async function fetchData() {
+    const res = await fetch(url);
+  }
+});
+```
+
+不要改变 useEffect(async () => {})，这是错误的
+
+##### useRef
+
+在函数组件中获取 DOM 元素或类组件实例
+
+```js
+function App() {
+  const testRef = useRef(null);
+
+  useEffect(() => {
+    console.log(testRef.current);
+  }, []);
+
+  return (
+    <div>
+      <TestC ref={testRef} />
+    </div>
+  );
+}
+```
+
+##### useContext 跨组件通信
+
+函数式组件的跨组件通信 hook，useContext
+
+使用步骤：
+
+1. 使用 createContext 创建 Context 对象
+2. 在顶层组件通过 Provider 提供数据
+3. 在底层组件通过 useContext hook 获取数据
+
+```js
+// 1. 创建Context对象
+const Context = createContext();
+
+// 底层组件
+function Son() {
+  // 通过useContext 获取 数据
+  const msg = useContext(Context);
+
+  return <div>SonC: {msg}</div>;
+}
+
+// 顶层组件
+function App() {
+  return (
+    <Context.Provider value={"this is message!"}>
+      <div>
+        <Son />
+      </div>
+    </Context.Provider>
+  );
+}
+```
+
+##### 自定义 Hook
+
+使用 React 内置的 useState、useEffect 等 自定义 hook，useXXXX()
+
+```js
+function useLocalStorage(key, defaultValue) {
+  const [msg, setMsg] = useState(defaultValue);
+
+  // 当msg变化时就把它存到localStorage
+  useEffect(() => {
+    window.localStorage.setItem(key, msg);
+  }, [msg, key]);
+
+  return [msg, setMsg];
+}
+```
